@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SJCET Bus Pass Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bus_styles.css') }}">
+    <style>
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .video-container {
+            background: linear-gradient(145deg, var(--secondary), var(--dark));
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        #video_feed {
+            width: 100%;
+            border-radius: 10px;
+            border: 2px solid var(--accent);
+        }
+
+        .input-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #ff3d08;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: #ff3d08;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .progress.capturing {
+            background: #4CAF50;  /* Green color during capture */
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--dark);
+            border-left: 3px solid var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .train-button-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .train-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #eb4034;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .train-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 35, 126, 0.3);
+            background: #d13027;
+        }
+
+        .train-progress-container {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 0 10px;
+            width: 100%;
+        }
+
+        .train-progress-text {
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .train-progress-inline {
+            flex-grow: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .train-progress-inline::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: white;
+            width: var(--progress, 0%);
+            transition: width 0.3s ease;
+        }
+
+        .train-button.training {
+            border-radius: 25px;
+            padding: 12px 25px;
+            min-width: 300px;
+            cursor: default;
+        }
+
+        .train-button.training #trainButtonText {
+            display: none;
+        }
+
+        .train-button.training .train-progress-container {
+            display: flex;
+        }
+
+        .train-button svg {
+            transition: all 0.3s ease;
+        }
+
+        .train-button:hover svg {
+            transform: scale(1.1);
+        }
+
+        .train-button.training svg {
+            display: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: var(--light);
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .nav-links svg {
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* Change blue colors to orange */
+        .button {
+            background: #eb4034;
+        }
+
+        .button:hover {
+            background: #d13027;
+        }
+
+        .success-message {
+            color: #eb4034;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">
+                <h2>SJCET Bus Pass</h2>
+            </div>
+            <div class="nav-links">
+                <a href="/" title="Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </a>
+                <a href="/register" title="Apply Now">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                </a>
+                <a href="/login" title="Login">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="main-content">
+        <div class="video-container">
+            <img id="video_feed" src="{{ url_for('video_feed') }}" alt="Video Feed">
+        </div>
+
+        <div class="input-section">
+            <h2>Student Registration</h2>
+            
+            <div class="form-group">
+                <label for="username">Full Name</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="collegeId">College ID</label>
+                <input type="text" id="collegeId" name="collegeId" required pattern="[0-9]{2}[A-Za-z]{3}[0-9]{3}" 
+                       title="Please enter valid college ID (e.g., 21ABC123)">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+
+            <button onclick="toggleCapture()" id="captureButton" class="button">Start Capture</button>
+
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <div id="status" class="status-text"></div>
+            </div>
+
+            <div class="instructions">
+                The images are collected for the facial recognition dataset. Please make sure to turn your head in multiple angles and preferably with multiple expressions to enable better accuracy.
+            </div>
+        </div>
+    </div>
+
+    <div class="train-button-container">
+        <button id="trainButton" onclick="trainModel()" class="train-button" title="Train Model">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+            </svg>
+            <div id="trainProgress" class="train-progress-container">
+                <span class="train-progress-text">Model Training:</span>
+                <div class="train-progress-inline"></div>
+            </div>
+        </button>
+    </div>
+
+    <script>
+        let isCapturing = false;
+
+        function toggleCapture() {
+            const button = document.getElementById('captureButton');
+            
+            if (!isCapturing) {
+                const username = document.getElementById('username').value;
+                const collegeId = document.getElementById('collegeId').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                if (!username || !collegeId || !password || !confirmPassword) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match!');
+                    return;
+                }
+
+                fetch('/capture', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        collegeId: collegeId,
+                        password: password
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        isCapturing = true;
+                        button.textContent = 'Stop Capture';
+                        button.style.background = 'var(--secondary)';
+                        startProgressCheck();
+                    } else {
+                        alert(data.message);
+                    }
+                });
+            } else {
+                fetch('/stop_capture', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    isCapturing = false;
+                    button.textContent = 'Start Capture';
+                    button.style.background = 'var(--primary)';
+                    document.getElementById('status').textContent = 'Capture stopped';
+                    document.getElementById('progressBar').style.width = '0%';
+                    capture_status = {
+                        "is_capturing": false,
+                        "count": 0,
+                        "total": 300
+                    };
+                });
+            }
+        }
+
+        function checkProgress() {
+            if (!isCapturing) return;
+            
+            fetch('/capture_status')
+                .then(response => response.json())
+                .then(data => {
+                    updateProgress(data.count);
+                    if (data.count >= 100) {
+                        isCapturing = false;
+                        document.getElementById('status').textContent = 'Capture Complete!';
+                        document.getElementById('captureButton').disabled = false;
+                    } else if (isCapturing) {
+                        setTimeout(checkProgress, 1000);
+                    }
+                });
+        }
+
+        function startProgressCheck() {
+            const progressBar = document.getElementById('progressBar');
+            const status = document.getElementById('status');
+            
+            progressBar.classList.add('capturing');  // Add green color class
+            
+            const checkProgress = setInterval(() => {
+                if (!isCapturing) {
+                    clearInterval(checkProgress);
+                    progressBar.classList.remove('capturing');  // Remove green color class
+                    return;
+                }
+
+                fetch('/capture_status')
+                    .then(response => response.json())
+                    .then(data => {
+                        progressBar.style.width = `${data.count}%`;
+                        status.textContent = `${data.count}% Complete`;
+                        
+                        if (!data.is_capturing) {
+                            clearInterval(checkProgress);
+                            isCapturing = false;
+                            progressBar.classList.remove('capturing');  // Remove green color class
+                            document.getElementById('captureButton').textContent = 'Start Capture';
+                            document.getElementById('captureButton').style.background = 'var(--primary)';
+                            status.textContent = 'Capture complete!';
+                        }
+                    });
+            }, 500);
+        }
+
+        window.onbeforeunload = function() {
+            if (isCapturing) {
+                fetch('/stop_capture', {
+                    method: 'POST'
+                });
+            }
+            
+            fetch('/shutdown')
+                .then(response => response.json())
+                .catch(error => console.error('Error:', error));
+        };
+
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (isCapturing) {
+                    fetch('/stop_capture', {
+                        method: 'POST'
+                    });
+                }
+                
+                fetch('/shutdown')
+                    .then(response => response.json())
+                    .catch(error => console.error('Error:', error));
+            });
+        });
+
+        function updateTrainingProgress(epoch, totalEpochs) {
+            const progressBar = document.querySelector('.train-progress-inline');
+            const progress = ((epoch + 1) / totalEpochs) * 100;
+            progressBar.style.setProperty('--progress', `${progress}%`);
+        }
+
+        function trainModel() {
+            const button = document.getElementById('trainButton');
+            button.disabled = true;
+            button.classList.add('training');
+
+            const eventSource = new EventSource('/train_progress');
+            
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.progress) {
+                    updateTrainingProgress(data.epoch, data.total_epochs);
+                }
+                if (data.complete) {
+                    eventSource.close();
+                    button.disabled = false;
+                    button.classList.remove('training');
+                    if (data.success) {
+                        alert('Model training completed successfully!');
+                    } else {
+                        alert('Error training model: ' + data.message);
+                    }
+                }
+            };
+
+            fetch('/train_model', {
+                method: 'POST'
+            }).catch(error => {
+                console.error('Error:', error);
+                eventSource.close();
+                button.disabled = false;
+                button.classList.remove('training');
+                alert('Error training model. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>

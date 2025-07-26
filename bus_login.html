@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to SJCET Bus Pass Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bus_styles.css') }}">
+    <style>
+        .route-section {
+            display: none;
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        .route-section.active {
+            display: block;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            background: white;
+            color: var(--dark);
+        }
+
+        .price-display {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .section-title {
+            color: var(--dark);
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px 50px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .route-section {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid #eee;
+        }
+
+        input, select {
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 1em;
+        }
+
+        .button {
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .price-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;  /* Increased from 1200px */
+            margin: 40px auto;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .login-section {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        .container.show-route {
+            display: block;
+            max-width: 1400px;  /* Increased from 1200px */
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px 50px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            width: 100%;
+        }
+
+        .history-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .history-box h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .ticket-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .ticket-item {
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .ticket-item.expired {
+            border-left-color: #dc3545;
+        }
+
+        .ticket-item.active {
+            border-left: 4px solid #28a745;  /* Changed from #eb4034 to Bootstrap green */
+        }
+
+        .ticket-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .ticket-item::after {
+            content: none;  /* This removes the "View Receipt" text */
+        }
+
+        .delete-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #ff4444;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .ticket-item:hover .delete-icon {
+            opacity: 1;
+        }
+
+        .ticket-item.expired .delete-icon {
+            display: none;
+        }
+
+        .ticket-route {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .ticket-date {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .ticket-status {
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        .status-active {
+            color: #28a745;  /* Changed from #eb4034 to Bootstrap green */
+        }
+
+        .status-expired {
+            color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: var(--light);
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .nav-links svg {
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover svg {
+            transform: scale(1.1);
+        }
+
+        .booking-history-container {
+            display: grid;
+            grid-template-columns: 60fr 40fr;  /* Updated width ratio */
+            gap: 40px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .booking-section, .history-section {
+            background: white;
+            padding: 40px;  /* Increased from 30px */
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            height: 100%;  /* Make both sections same height */
+            min-height: 600px;  /* Add minimum height */
+        }
+
+        .history-section {
+            padding: 30px;
+            height: auto;  /* Let it adjust based on content */
+            max-height: 100%;  /* Don't exceed booking section height */
+            overflow: hidden;  /* Hide overflow */
+        }
+
+        .ticket-list {
+            flex: 1;  /* Take remaining space */
+            max-height: none;  /* Remove max-height */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 10px;  /* Add padding for scrollbar */
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;  /* Increased from 25px */
+        }
+
+        .price-display {
+            font-size: 1.5em;
+            margin: 40px 0;  /* Increased from 30px */
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .booking-section .button {
+            margin-top: auto;  /* Push button to bottom */
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .booking-history-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Change blue colors to orange */
+        .button {
+            background: #eb4034;
+        }
+
+        .button:hover {
+            background: #d13027;
+        }
+
+        .ticket-item.active {
+            border-left: 4px solid #28a745;  /* Changed from #eb4034 to Bootstrap green */
+        }
+
+        .status-active {
+            color: #28a745;  /* Changed from #eb4034 to Bootstrap green */
+        }
+
+        .delete-icon {
+            color: #ff4444;  /* Keep red for delete */
+        }
+
+        /* Any other blue elements */
+        a {
+            color: #ff3d08;
+        }
+
+        .selected {
+            background: #ff3d08;
+        }
+
+        /* Progress bars and other elements */
+        .progress-bar {
+            background: #ff3d08;
+        }
+
+        .train-button {
+            background: #eb4034;
+        }
+
+        .train-button:hover {
+            background: #d13027;
+        }
+
+        /* Custom scrollbar for ticket list */
+        .ticket-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ticket-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .ticket-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .ticket-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Update container styles for better layout */
+        .container {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container.show-route {
+            display: block;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 40px;
+        }
+
+        /* Hide login container when showing route section */
+        .container.show-route .login-section {
+            display: none;
+        }
+
+        /* Make booking-history-container take full width */
+        .booking-history-container {
+            display: grid;
+            grid-template-columns: 60% 40%;
+            gap: 40px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Update booking section styles */
+        .booking-section {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+            gap: 20px;  /* Add consistent spacing */
+        }
+
+        .form-group {
+            margin-bottom: 0;  /* Remove margin since we're using gap */
+        }
+
+        .price-button-group {
+            margin-top: auto;  /* Push to bottom */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .price-display {
+            margin: 0;  /* Remove margins since we're using gap */
+        }
+
+        .booking-section .button {
+            margin-top: 0;  /* Remove margin since we're using gap */
+        }
+
+        /* Update history section styles to match booking section height */
+        .history-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            height: 100%;
+        }
+
+        /* Update ticket list to fill available space */
+        .ticket-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .booking-history-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+
+        /* Add new styles for user info header */
+        .user-info {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(235, 64, 52, 0.1);
+        }
+
+        .user-info-header {
+            color: #eb4034;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .user-info-value {
+            color: #333;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .user-info-value:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <!-- Add image header -->
+    <header>
+        <div style="text-align: center; padding: 10px;">
+            <img src="{{ url_for('static', filename='images/sjcet_logo.png') }}" alt="SJCET Logo" style="max-width: 100%; height: auto;">
+        </div>
+    </header>
+    
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">
+                <h2>SJCET Bus Pass</h2>
+            </div>
+            <div class="nav-links">
+                <a href="/" title="Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </a>
+                <a href="/register" title="Apply Now">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                </a>
+                <a href="/login" title="Login">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                </a>
+                <a href="#" id="logoutButton" style="display: none;" title="Logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="login-section">
+            <div class="login-box">
+                <h2 class="section-title">Login to SJCET Bus Pass Portal</h2>
+                <div id="loginSection">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+
+                    <button onclick="verifyCredentials()" class="button">Login</button>
+                    
+                    <div id="result" class="result"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="routeSection" class="route-section">
+            <div class="booking-history-container">
+                <div class="booking-section">
+                    <h2 class="section-title">Select Your Route</h2>
+                    
+                    <!-- Update the user info section in booking-section -->
+                    <div class="user-info">
+                        <div>
+                            <div class="user-info-header">Name</div>
+                            <div class="user-info-value" id="displayName"></div>
+                        </div>
+                        <div>
+                            <div class="user-info-header">College ID</div>
+                            <div class="user-info-value" id="displayCollegeId"></div>
+                        </div>
+                        <div>
+                            <div class="user-info-header">Batch</div>
+                            <div class="user-info-value" id="displayBatch"></div>
+                        </div>
+                        <div>
+                            <div class="user-info-header">Department</div>
+                            <div class="user-info-value" id="displayDept"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location">Select Location:</label>
+                        <select id="location" onchange="updatePrice()">
+                            <option value="">Select a location</option>
+                            <option value="Thiruvalla">Thiruvalla</option>
+                            <option value="Kottayam">Kottayam</option>
+                            <option value="Kollam">Kollam</option>
+                            <option value="Thodupuzha">Thodupuzha</option>
+                            <option value="Kanjirapally">Kanjirapally</option>
+                            <option value="Mallapally">Mallapally</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="isReturn" onchange="updatePrice()"> Return Ticket
+                        </label>
+                    </div>
+
+                    <div class="price-display" id="priceDisplay">
+                        Price: ₹0
+                    </div>
+                    <button onclick="bookTicket()" class="button">Book Ticket</button>
+                </div>
+
+                <div class="history-section">
+                    <h3>Ticket History</h3>
+                    <div id="ticketHistory" class="ticket-list">
+                        <!-- Tickets will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Replace the window.onload function with a more reliable solution
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we're returning from receipt page
+            const shouldRefreshHistory = sessionStorage.getItem('shouldRefreshHistory');
+            if (shouldRefreshHistory) {
+                // Show the route section first
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('routeSection').style.display = 'block';
+                document.getElementById('logoutButton').style.display = 'block';
+                document.querySelector('.container').classList.add('show-route');
+                
+                // Then fetch the history
+                fetchTicketHistory(shouldRefreshHistory);
+                sessionStorage.removeItem('shouldRefreshHistory');
+            }
+        });
+
+        // Keep track of current logged in user
+        let currentUser = '';
+
+        const prices = {
+            'Thiruvalla': 100,
+            'Kottayam': 50,
+            'Kollam': 150,
+            'Thodupuzha': 120,
+            'Kanjirapally': 120,
+            'Mallapally': 130
+        };
+
+        function updatePrice() {
+            const location = document.getElementById('location').value;
+            let price = prices[location] || 0;
+            const isReturn = document.getElementById('isReturn').checked;
+            
+            if (isReturn) {
+                price *= 2;
+            }
+            
+            document.getElementById('priceDisplay').textContent = `Price: ₹${price}`;
+        }
+
+        function parseCollegeId(collegeId) {
+            // Extract year and department from college ID (e.g., sjc22ad050)
+            const match = collegeId.match(/sjc(\d{2})([a-z]{2})\d{3}/i);
+            if (match) {
+                const year = '20' + match[1];
+                const dept = match[2].toUpperCase();
+                const batchEnd = parseInt(year) + 4;
+                return {
+                    batch: `${year}-${batchEnd}`,
+                    department: dept
+                };
+            }
+            return {
+                batch: 'N/A',
+                department: 'N/A'
+            };
+        }
+
+        function verifyCredentials() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            const container = document.querySelector('.container');
+
+            if (!username || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            fetch('/verify_login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    studentId: username,
+                    password: password
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentUser = username;
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('routeSection').style.display = 'block';
+                    document.getElementById('logoutButton').style.display = 'block';
+                    container.classList.add('show-route');
+                    
+                    // Update user info display
+                    document.getElementById('displayName').textContent = data.name || username;
+                    document.getElementById('displayCollegeId').textContent = data.collegeId || 'Not Available';
+                    
+                    // Parse college ID and update batch and department
+                    const idInfo = parseCollegeId(data.collegeId);
+                    document.getElementById('displayBatch').textContent = idInfo.batch;
+                    document.getElementById('displayDept').textContent = idInfo.department;
+                    
+                    fetchTicketHistory(username);
+                } else {
+                    resultDiv.style.display = 'block';
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = data.message || 'Invalid credentials';
+                }
+            });
+        }
+
+        function fetchTicketHistory(username) {
+            fetch(`/ticket_history/${username}`)
+                .then(response => response.json())
+                .then(data => {
+                    const historyContainer = document.getElementById('ticketHistory');
+                    historyContainer.innerHTML = '';
+
+                    data.tickets.forEach(ticket => {
+                        const isExpired = new Date(ticket.expiryDate) < new Date();
+                        const ticketElement = document.createElement('div');
+                        ticketElement.className = `ticket-item ${isExpired ? 'expired' : 'active'}`;
+                        ticketElement.innerHTML = `
+                            <div class="ticket-route">${ticket.route}</div>
+                            <div class="ticket-date">Purchased: ${new Date(ticket.purchaseDate).toLocaleDateString()}</div>
+                            <div class="ticket-date">Expires: ${new Date(ticket.expiryDate).toLocaleDateString()}</div>
+                            <div class="ticket-price">Price: Rs.${ticket.price}</div>  <!-- Changed ₹ to Rs. -->
+                            <div class="ticket-status ${isExpired ? 'status-expired' : 'status-active'}">
+                                ${isExpired ? 'Expired' : 'Active'}
+                            </div>
+                            ${!isExpired ? '<i class="fas fa-trash delete-icon" title="Expire ticket"></i>' : ''}
+                        `;
+                        
+                        // Add click event for viewing receipt
+                        ticketElement.addEventListener('click', (e) => {
+                            // Ignore click if delete icon was clicked
+                            if (e.target.classList.contains('delete-icon')) return;
+                            
+                            window.location.href = `/booking_success?username=${username}&location=${ticket.route}&price=${ticket.price}&duration=${ticket.duration}&booking_date=${ticket.purchaseDate}&booking_reference=${ticket.reference || ''}`;
+                        });
+
+                        // Add click event for delete icon
+                        const deleteIcon = ticketElement.querySelector('.delete-icon');
+                        if (deleteIcon) {
+                            deleteIcon.addEventListener('click', (e) => {
+                                e.stopPropagation(); // Prevent receipt view
+                                expireTicket(username, ticket.purchaseDate);
+                            });
+                        }
+                        
+                        historyContainer.appendChild(ticketElement);
+                    });
+                });
+        }
+
+        // Add function to expire ticket
+        function expireTicket(username, purchaseDate) {
+            fetch('/expire_ticket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    purchaseDate: purchaseDate
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Refresh ticket history
+                    fetchTicketHistory(username);
+                } else {
+                    alert('Error expiring ticket: ' + data.message);
+                }
+            });
+        }
+
+        function bookTicket() {
+            const location = document.getElementById('location').value;
+            const username = currentUser;  // Changed from username input to currentUser
+            const collegeId = document.getElementById('displayCollegeId').textContent;  // Get college ID from display
+            const isReturn = document.getElementById('isReturn').checked;
+            const duration = isReturn ? 259200 : 86400;
+            const basePrice = prices[location] || 0;
+            const price = isReturn ? basePrice * 2 : basePrice;
+
+            if (!location) {
+                alert('Please select a location');
+                return;
+            }
+
+            fetch('/book_ticket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    collegeId: collegeId,  // Add college ID to request
+                    location: location,
+                    price: price,
+                    duration: duration,
+                    isReturn: isReturn
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.message || 'Error booking ticket');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error booking ticket');
+            });
+        }
+
+        // Add periodic refresh for active session
+        setInterval(() => {
+            if (currentUser && document.getElementById('routeSection').style.display === 'block') {
+                fetchTicketHistory(currentUser);
+            }
+        }, 5000);  // Refresh every 5 seconds if logged in
+
+        // Add logout function
+        document.getElementById('logoutButton').addEventListener('click', function(e) {
+            e.preventDefault();
+            currentUser = '';  // Clear current user
+            // Hide route section and logout button
+            document.getElementById('routeSection').style.display = 'none';
+            document.getElementById('logoutButton').style.display = 'none';
+            // Show login section
+            document.getElementById('loginSection').style.display = 'block';
+            document.querySelector('.container').classList.remove('show-route');
+            // Clear input fields
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            // Clear any error messages
+            document.getElementById('result').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

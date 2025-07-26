@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Receipt</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .receipt-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .receipt {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            max-width: 90%;
+            display: flex;  /* Add display flex */
+            gap: 20px;     /* Add gap between elements */
+        }
+
+        .receipt-content {
+            flex: 1;       /* Take remaining space */
+        }
+
+        .route-graphic {
+            width: 50px;
+            height: 400px;  /* Match receipt content height */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .route-graphic svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .dot-container {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .dot-container:hover {
+            transform: translateY(-3px);
+        }
+
+        .route-label {
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .dot {
+            fill: black;
+            transition: transform 0.3s ease, r 0.3s ease;
+        }
+
+        .dot:hover {
+            transform: scale(1.2);
+            r: 7;
+        }
+
+        .route-text {
+            font-size: 12px;
+            fill: black;
+            text-anchor: middle;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .dot-container:hover .route-text {
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        .line {
+            stroke: black;
+            stroke-width: 2;
+        }
+
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .receipt-header h1 {
+            color: #eb4034;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .receipt-header p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .receipt-details {
+            border-top: 2px dashed #eee;
+            border-bottom: 2px dashed #eee;
+            padding: 20px 0;
+            margin: 20px 0;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .label {
+            color: #666;
+        }
+
+        .value {
+            color: #eb4034;
+            font-weight: bold;
+        }
+
+        .total {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .print-button, .back-button {
+            flex: 1;
+            background: #eb4034;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .back-button {
+            background: #666;
+        }
+
+        .print-button:hover, .back-button:hover {
+            background: #d13027;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .receipt {
+                box-shadow: none;
+                padding: 20px;
+            }
+            
+            .print-button {
+                display: none;
+            }
+
+            .back-button {
+                display: none;
+            }
+        }
+
+        /* Update orange colors */
+        .receipt::before {
+            background: linear-gradient(90deg, #ff3d08, #ff3d08);
+        }
+
+        .detail-value {
+            color: #ff3d08;
+        }
+
+        .price-section {
+            background: #ff3d08;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="receipt">
+            <div class="receipt-content">
+                <div class="receipt-header">
+                    <h1>SJCET Bus Pass</h1>
+                    <p>Booking Receipt</p>
+                    <p>{{ booking_date }} at {{ booking_time }}</p>
+                </div>
+
+                <div class="receipt-details">
+                    <div class="detail-row">
+                        <span class="label">Passenger Name:</span>
+                        <span class="value">{{ name }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">College ID:</span>
+                        <span class="value">{{ collegeId }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Destination:</span>
+                        <span class="value">{{ location }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Ticket Type:</span>
+                        <span class="value">{{ "Return Ticket" if isReturn else "Single Ticket" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Validity:</span>
+                        <span class="value">{{ "3 Days" if isReturn else "1 Day" }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Issue Date:</span>
+                        <span class="value">{{ booking_date }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Valid Until:</span>
+                        <span class="value">{{ expiry_date }}</span>
+                    </div>
+                    <div class="detail-row total">
+                        <span class="label">Total Amount:</span>
+                        <span class="value">₹{{ price }}</span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="window.print()" class="print-button">Print Receipt</button>
+                    <button onclick="goBackAndRefresh()" class="back-button">Back to Booking</button>
+                </div>
+            </div>
+
+            <div class="route-graphic">
+                <svg viewBox="0 0 50 400">
+                    <!-- Starting point -->
+                    <g class="dot-container">
+                        <circle cx="25" cy="50" r="5" class="dot"></circle>
+                        <text x="25" y="35" class="route-text">College</text>
+                    </g>
+
+                    <!-- Line connecting the dots -->
+                    <line x1="25" y1="50" x2="25" y2="350" class="line"></line>
+
+                    <!-- Destination -->
+                    <g class="dot-container">
+                        <circle cx="25" cy="350" r="5" class="dot"></circle>
+                        <text x="25" y="365" class="route-text">{{ location }}</text>
+                    </g>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function goBackAndRefresh() {
+            // Store username in sessionStorage before going back
+            const urlParams = new URLSearchParams(window.location.search);
+            const username = urlParams.get('username');
+            sessionStorage.setItem('shouldRefreshHistory', username);
+            history.back();
+        }
+    </script>
+</body>
+</html>
